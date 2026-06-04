@@ -441,7 +441,8 @@ public class DeviceCalendarPlusIosPlugin: NSObject, FlutterPlugin, EKEventViewDe
           let startDateMillis = args["startDate"] as? Int64,
           let endDateMillis = args["endDate"] as? Int64,
           let isAllDay = args["isAllDay"] as? Bool,
-          let availability = args["availability"] as? String else {
+          let availability = args["availability"] as? String,
+          let status = args["status"] as? String else {
       result(FlutterError(
         code: PlatformExceptionCodes.invalidArguments,
         message: "Missing required arguments for createEvent",
@@ -472,6 +473,7 @@ public class DeviceCalendarPlusIosPlugin: NSObject, FlutterPlugin, EKEventViewDe
       url: url,
       timeZone: timeZone,
       availability: availability,
+      status: status,
       recurrenceRule: recurrenceRule
     ) { serviceResult in
       DispatchQueue.main.async {
@@ -547,6 +549,7 @@ public class DeviceCalendarPlusIosPlugin: NSObject, FlutterPlugin, EKEventViewDe
     let isAllDay = args["isAllDay"] as? Bool
     let timeZone = args["timeZone"] as? String
     let availability = args["availability"] as? String
+    let status = args["status"] as? String
     let clearedFields = args["clearedFields"] as? [String] ?? []
 
     // Parse dates if provided
@@ -575,6 +578,7 @@ public class DeviceCalendarPlusIosPlugin: NSObject, FlutterPlugin, EKEventViewDe
       isAllDay: isAllDay,
       timeZone: timeZone,
       availability: availability,
+      status: status,
       clearedFields: clearedFields
     ) { serviceResult in
       DispatchQueue.main.async {
@@ -627,6 +631,7 @@ public class DeviceCalendarPlusIosPlugin: NSObject, FlutterPlugin, EKEventViewDe
     let isAllDay = args["isAllDay"] as? Bool
     let timeZone = args["timeZone"] as? String
     let availability = args["availability"] as? String
+    let status = args["status"] as? String
     let recurrenceRule = args["recurrenceRule"] as? String
     let clearedFields = args["clearedFields"] as? [String] ?? []
 
@@ -650,6 +655,7 @@ public class DeviceCalendarPlusIosPlugin: NSObject, FlutterPlugin, EKEventViewDe
       isAllDay: isAllDay,
       timeZone: timeZone,
       availability: availability,
+      status: status,
       recurrenceRule: recurrenceRule,
       clearedFields: clearedFields
     ) { serviceResult in

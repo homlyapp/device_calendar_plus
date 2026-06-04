@@ -164,8 +164,9 @@ class EventsService(private val context: Context) {
         }
     }
     
-    private fun statusToString(status: Int): String {
+    private fun statusToString(status: Int?): String {
         return when (status) {
+            null -> "none"
             CalendarContract.Events.STATUS_CONFIRMED -> "confirmed"
             CalendarContract.Events.STATUS_TENTATIVE -> "tentative"
             CalendarContract.Events.STATUS_CANCELED -> "canceled"
@@ -216,7 +217,7 @@ class EventsService(private val context: Context) {
         val rawEnd = if (!cursor.isNull(endIndex)) cursor.getLong(endIndex) else rawStart
         val allDay = if (!cursor.isNull(allDayIndex)) cursor.getInt(allDayIndex) == 1 else false
         val availability = if (!cursor.isNull(availabilityIndex)) cursor.getInt(availabilityIndex) else 0
-        val status = if (!cursor.isNull(statusIndex)) cursor.getInt(statusIndex) else 0
+        val status = if (!cursor.isNull(statusIndex)) cursor.getInt(statusIndex) else null
         val timeZone = if (!cursor.isNull(timeZoneIndex)) cursor.getString(timeZoneIndex) else null
         val recurrenceRule = if (!cursor.isNull(recurrenceRuleIndex)) cursor.getString(recurrenceRuleIndex) else null
         val createdDate = if (createdIndex >= 0 && !cursor.isNull(createdIndex)) cursor.getLong(createdIndex) else null
@@ -594,6 +595,7 @@ class EventsService(private val context: Context) {
         url: String?,
         timeZone: String?,
         availability: String,
+        status: String,
         recurrenceRule: String?
     ): Result<String> {
         // Check for write calendar permission
@@ -673,8 +675,7 @@ class EventsService(private val context: Context) {
                 }
                 put(CalendarContract.Events.AVAILABILITY, availabilityValue)
                 
-                // Set status to confirmed
-                put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CONFIRMED)
+                putEventStatus(this, status)
             }
             
             val uri = context.contentResolver.insert(
@@ -774,6 +775,7 @@ class EventsService(private val context: Context) {
         isAllDay: Boolean?,
         timeZone: String?,
         availability: String?,
+        status: String?,
         clearedFields: List<String>
     ): Result<Unit> {
         // Check for write calendar permission
@@ -870,6 +872,10 @@ class EventsService(private val context: Context) {
                 }
                 values.put(CalendarContract.Events.AVAILABILITY, availabilityValue)
             }
+
+            if (status != null) {
+                putEventStatus(values, status)
+            }
             
             // Perform the update
             val updatedRows = context.contentResolver.update(
@@ -929,6 +935,7 @@ class EventsService(private val context: Context) {
         isAllDay: Boolean?,
         timeZone: String?,
         availability: String?,
+        status: String?,
         recurrenceRule: String?,
         clearedFields: List<String>
     ): Result<String> {
@@ -947,16 +954,19 @@ class EventsService(private val context: Context) {
                 "thisAndFollowing" -> updateRecurringThisAndFollowing(
                     eventId, timestamp, title, startDate, endDate,
                     description, location, url, isAllDay, timeZone, availability,
+                    status,
                     recurrenceRule, clearedFields
                 )
                 "thisInstance" -> updateRecurringThisInstance(
                     eventId, timestamp, title, startDate, endDate,
                     description, location, url, isAllDay, timeZone, availability,
+                    status,
                     clearedFields
                 )
                 "allEvents" -> updateRecurringAllEvents(
                     eventId, title, startDate, endDate,
                     description, location, url, isAllDay, timeZone, availability,
+                    status,
                     recurrenceRule, clearedFields
                 )
                 else -> Result.failure(
@@ -994,6 +1004,7 @@ class EventsService(private val context: Context) {
         isAllDay: Boolean?,
         timeZone: String?,
         availability: String?,
+        status: String?,
         recurrenceRule: String?,
         clearedFields: List<String>
     ): Result<String> {
@@ -1031,6 +1042,10 @@ class EventsService(private val context: Context) {
 
         if (availability != null) {
             values.put(CalendarContract.Events.AVAILABILITY, availabilityToInt(availability))
+        }
+
+        if (status != null) {
+            putEventStatus(values, status)
         }
 
         val effectiveIsAllDay = isAllDay ?: row.allDay
@@ -1115,6 +1130,7 @@ class EventsService(private val context: Context) {
         isAllDay: Boolean?,
         timeZone: String?,
         availability: String?,
+        status: String?,
         recurrenceRule: String?,
         clearedFields: List<String>
     ): Result<String> {
@@ -1156,6 +1172,7 @@ class EventsService(private val context: Context) {
             if ("url" in clearedFields) null else (url ?: row.url)
         val effectiveTimeZone = timeZone ?: row.timeZone
         val effectiveAvailability = availability ?: row.availability
+        val effectiveStatus = status ?: row.status
         val effectiveRrule = when {
             "recurrenceRule" in clearedFields -> null
             recurrenceRule != null -> recurrenceRule
@@ -1201,6 +1218,7 @@ class EventsService(private val context: Context) {
             url = effectiveUrl,
             timeZone = effectiveTimeZone,
             availability = effectiveAvailability,
+            status = effectiveStatus,
             rrule = effectiveRrule
         )
         val newEventId = insertResult.getOrElse { return Result.failure(it) }
@@ -1253,6 +1271,7 @@ class EventsService(private val context: Context) {
         isAllDay: Boolean?,
         timeZone: String?,
         availability: String?,
+        status: String?,
         clearedFields: List<String>
     ): Result<String> {
         if (timestamp == null) {
@@ -1300,7 +1319,7 @@ class EventsService(private val context: Context) {
             put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME, timestamp)
             put(CalendarContract.Events.DTSTART, newStart)
             put(CalendarContract.Events.DURATION, "P${(newEnd - newStart) / 1000}S")
-            put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CONFIRMED)
+            putEventStatus(this, status ?: row.status)
 
             if (title != null) {
                 put(CalendarContract.Events.TITLE, title)
@@ -1529,6 +1548,7 @@ class EventsService(private val context: Context) {
         val allDay: Boolean,
         val timeZone: String?,
         val availability: String,
+        val status: String,
         val rrule: String?
     )
 
@@ -1547,6 +1567,7 @@ class EventsService(private val context: Context) {
             CalendarContract.Events.ALL_DAY,
             CalendarContract.Events.EVENT_TIMEZONE,
             CalendarContract.Events.AVAILABILITY,
+            CalendarContract.Events.STATUS,
             CalendarContract.Events.RRULE
         )
         context.contentResolver.query(
@@ -1580,6 +1601,9 @@ class EventsService(private val context: Context) {
                 availability = availabilityToString(
                     (long(CalendarContract.Events.AVAILABILITY) ?: 0L).toInt()
                 ),
+                status = statusToString(
+                    long(CalendarContract.Events.STATUS)?.toInt()
+                ),
                 rrule = str(CalendarContract.Events.RRULE)
             )
         }
@@ -1598,6 +1622,7 @@ class EventsService(private val context: Context) {
         url: String?,
         timeZone: String?,
         availability: String,
+        status: String,
         rrule: String?
     ): Result<String> {
         val values = android.content.ContentValues().apply {
@@ -1629,7 +1654,7 @@ class EventsService(private val context: Context) {
                 else (timeZone ?: java.util.TimeZone.getDefault().id)
             )
             put(CalendarContract.Events.AVAILABILITY, availabilityToInt(availability))
-            put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CONFIRMED)
+            putEventStatus(this, status)
         }
         val uri = context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
         val newId = uri?.lastPathSegment
@@ -1650,6 +1675,24 @@ class EventsService(private val context: Context) {
             "free" -> CalendarContract.Events.AVAILABILITY_FREE
             "tentative" -> CalendarContract.Events.AVAILABILITY_TENTATIVE
             else -> CalendarContract.Events.AVAILABILITY_BUSY
+        }
+    }
+
+    private fun putEventStatus(values: android.content.ContentValues, status: String) {
+        val statusValue = statusToInt(status)
+        if (statusValue == null) {
+            values.putNull(CalendarContract.Events.STATUS)
+        } else {
+            values.put(CalendarContract.Events.STATUS, statusValue)
+        }
+    }
+
+    private fun statusToInt(status: String): Int? {
+        return when (status) {
+            "none" -> null
+            "tentative" -> CalendarContract.Events.STATUS_TENTATIVE
+            "canceled" -> CalendarContract.Events.STATUS_CANCELED
+            else -> CalendarContract.Events.STATUS_CONFIRMED
         }
     }
 

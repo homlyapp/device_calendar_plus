@@ -145,6 +145,7 @@ class DeviceCalendarPlusIos extends DeviceCalendarPlusPlatform {
     String? url,
     String? timeZone,
     String availability,
+    String status,
     String? recurrenceRule,
   ) async {
     final result = await methodChannel.invokeMethod<String>(
@@ -160,6 +161,7 @@ class DeviceCalendarPlusIos extends DeviceCalendarPlusPlatform {
         'url': url,
         'timeZone': timeZone,
         'availability': availability,
+        'status': status,
         'recurrenceRule': recurrenceRule,
       },
     );
@@ -188,6 +190,7 @@ class DeviceCalendarPlusIos extends DeviceCalendarPlusPlatform {
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
   }) async {
     final args = <String, dynamic>{
       'eventId': eventId,
@@ -197,6 +200,7 @@ class DeviceCalendarPlusIos extends DeviceCalendarPlusPlatform {
       'isAllDay': isAllDay,
       'timeZone': timeZone,
       'availability': availability,
+      'status': status,
     };
     writePatchFields(args, {
       'description': description,
@@ -220,6 +224,7 @@ class DeviceCalendarPlusIos extends DeviceCalendarPlusPlatform {
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
     Patch<String>? recurrenceRule,
   }) async {
     final args = <String, dynamic>{
@@ -232,6 +237,7 @@ class DeviceCalendarPlusIos extends DeviceCalendarPlusPlatform {
       'isAllDay': isAllDay,
       'timeZone': timeZone,
       'availability': availability,
+      'status': status,
     };
     writePatchFields(args, {
       'description': description,

@@ -394,11 +394,12 @@ class DeviceCalendarPlusAndroidPlugin :
         val url = call.argument<String>("url")
         val timeZone = call.argument<String>("timeZone")
         val availability = call.argument<String>("availability")
+        val status = call.argument<String>("status")
         val recurrenceRule = call.argument<String>("recurrenceRule")
         
         // Validate required arguments
         if (calendarId == null || title == null || startDateMillis == null || 
-            endDateMillis == null || isAllDay == null || availability == null) {
+            endDateMillis == null || isAllDay == null || availability == null || status == null) {
             result.error(
                 PlatformExceptionCodes.INVALID_ARGUMENTS,
                 "Missing required arguments for createEvent",
@@ -421,6 +422,7 @@ class DeviceCalendarPlusAndroidPlugin :
             url,
             timeZone,
             availability,
+            status,
             recurrenceRule
         )
         
@@ -489,6 +491,7 @@ class DeviceCalendarPlusAndroidPlugin :
         val isAllDay = call.argument<Boolean>("isAllDay")
         val timeZone = call.argument<String>("timeZone")
         val availability = call.argument<String>("availability")
+        val status = call.argument<String>("status")
         val clearedFields = call.argument<List<String>>("clearedFields") ?: emptyList()
         
         // Convert dates if provided
@@ -506,6 +509,7 @@ class DeviceCalendarPlusAndroidPlugin :
             isAllDay,
             timeZone,
             availability,
+            status,
             clearedFields
         )
         
@@ -555,6 +559,7 @@ class DeviceCalendarPlusAndroidPlugin :
         val isAllDay = call.argument<Boolean>("isAllDay")
         val timeZone = call.argument<String>("timeZone")
         val availability = call.argument<String>("availability")
+        val status = call.argument<String>("status")
         val recurrenceRule = call.argument<String>("recurrenceRule")
         val clearedFields = call.argument<List<String>>("clearedFields") ?: emptyList()
 
@@ -574,6 +579,7 @@ class DeviceCalendarPlusAndroidPlugin :
             isAllDay,
             timeZone,
             availability,
+            status,
             recurrenceRule,
             clearedFields
         )

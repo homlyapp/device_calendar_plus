@@ -99,6 +99,7 @@ void main() {
         'https://example.com/event/123',
         'America/New_York',
         'busy',
+        'tentative',
         null,
       );
 
@@ -114,6 +115,7 @@ void main() {
       expect(log[0].arguments['url'], equals('https://example.com/event/123'));
       expect(log[0].arguments['timeZone'], equals('America/New_York'));
       expect(log[0].arguments['availability'], equals('busy'));
+      expect(log[0].arguments['status'], equals('tentative'));
     });
 
     test('updateEvent serializes only provided fields', () async {
@@ -131,6 +133,7 @@ void main() {
       expect(log[0].arguments['isAllDay'], isNull);
       expect(log[0].arguments['timeZone'], isNull);
       expect(log[0].arguments['availability'], isNull);
+      expect(log[0].arguments['status'], isNull);
     });
   });
 }

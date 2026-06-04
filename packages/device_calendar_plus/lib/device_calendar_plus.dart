@@ -6,6 +6,7 @@ import 'src/calendar_permission_status.dart';
 import 'src/calendar_source.dart';
 import 'src/event.dart';
 import 'src/event_availability.dart';
+import 'src/event_status.dart';
 import 'src/event_span.dart';
 import 'src/platform_exception_converter.dart';
 import 'src/recurrence_rule.dart';
@@ -556,6 +557,7 @@ class DeviceCalendar {
   /// [timeZone] is optional timezone identifier (null for all-day events).
   ///   The platform will validate the timezone string.
   /// [availability] is the availability status (default: EventAvailability.busy).
+  /// [status] is the event status (default: EventStatus.confirmed).
   /// [recurrenceRule] is an optional recurrence rule for repeating events.
   ///
   /// Returns the system-generated event ID.
@@ -594,6 +596,7 @@ class DeviceCalendar {
     String? url,
     String? timeZone,
     EventAvailability availability = EventAvailability.busy,
+    EventStatus status = EventStatus.confirmed,
     RecurrenceRule? recurrenceRule,
   }) async {
     // Validate required fields
@@ -636,6 +639,7 @@ class DeviceCalendar {
         url,
         timeZone,
         availability.name,
+        status.name,
         recurrenceRule?.toRruleString(),
       );
       return eventId;
@@ -727,6 +731,7 @@ class DeviceCalendar {
   ///   - Note: This reinterprets the local time, not preserving the instant
   ///   - Example: "3:00 PM EST" → "3:00 PM PST" (different instant in time)
   /// - [availability] - new availability status
+  /// - [status] - new event status
   ///
   /// [description], [location] and [url] take a [Patch]: omit the argument (or
   /// pass `null`) to leave the field unchanged, [Patch.set] to assign a new
@@ -775,6 +780,7 @@ class DeviceCalendar {
     bool? isAllDay,
     String? timeZone,
     EventAvailability? availability,
+    EventStatus? status,
   }) async {
     // Validate eventId
     if (eventId.trim().isEmpty) {
@@ -794,7 +800,8 @@ class DeviceCalendar {
         url == null &&
         isAllDay == null &&
         timeZone == null &&
-        availability == null) {
+        availability == null &&
+        status == null) {
       throw ArgumentError(
         'At least one field must be provided to update',
       );
@@ -829,6 +836,7 @@ class DeviceCalendar {
         isAllDay: isAllDay,
         timeZone: timeZone,
         availability: availability?.name,
+        status: status?.name,
       );
     } on PlatformException catch (e, stackTrace) {
       final convertedException =
@@ -927,6 +935,7 @@ class DeviceCalendar {
     bool? isAllDay,
     String? timeZone,
     EventAvailability? availability,
+    EventStatus? status,
     Patch<RecurrenceRule>? recurrenceRule,
   }) async {
     // Validate instanceId
@@ -969,6 +978,7 @@ class DeviceCalendar {
         isAllDay == null &&
         timeZone == null &&
         availability == null &&
+        status == null &&
         recurrenceRule == null) {
       throw ArgumentError(
         'At least one field must be provided to update',
@@ -1010,6 +1020,7 @@ class DeviceCalendar {
         isAllDay: isAllDay,
         timeZone: timeZone,
         availability: availability?.name,
+        status: status?.name,
         recurrenceRule: recurrenceRulePatch,
       );
     } on PlatformException catch (e, stackTrace) {

@@ -63,6 +63,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     String? url,
     String? timeZone,
     String availability,
+    String status,
     String? recurrenceRule,
   ) async =>
       'mock-event-id';
@@ -82,6 +83,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
   }) async {}
 
   @override
@@ -98,6 +100,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
     Patch<String>? recurrenceRule,
   }) async =>
       'mock-event-id';

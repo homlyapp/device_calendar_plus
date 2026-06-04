@@ -161,6 +161,7 @@ abstract class DeviceCalendarPlusPlatform extends PlatformInterface {
   ///   `CalendarContract.Events.CUSTOM_APP_URI`.
   /// [timeZone] is optional timezone identifier (null for all-day events).
   /// [availability] is the availability status (busy, free, tentative, unavailable).
+  /// [status] is the event status (none, confirmed, tentative, canceled).
   ///
   /// [recurrenceRule] is an optional RRULE string for recurring events.
   ///
@@ -177,6 +178,7 @@ abstract class DeviceCalendarPlusPlatform extends PlatformInterface {
     String? url,
     String? timeZone,
     String availability,
+    String status,
     String? recurrenceRule,
   );
 
@@ -209,6 +211,7 @@ abstract class DeviceCalendarPlusPlatform extends PlatformInterface {
   /// - [isAllDay] - change between all-day and timed event
   /// - [timeZone] - new timezone identifier
   /// - [availability] - new availability identifier
+  /// - [status] - new event status identifier
   ///
   /// [description], [location] and [url] take a [Patch]: `null` leaves the
   /// field unchanged, [Patch.set] assigns a value, [Patch.clear] removes it.
@@ -226,6 +229,7 @@ abstract class DeviceCalendarPlusPlatform extends PlatformInterface {
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
   });
 
   /// Updates a recurring event, choosing which occurrences the edit affects.
@@ -256,6 +260,7 @@ abstract class DeviceCalendarPlusPlatform extends PlatformInterface {
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
     Patch<String>? recurrenceRule,
   });
 

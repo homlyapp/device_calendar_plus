@@ -365,6 +365,7 @@ class EventsService {
     url: String?,
     timeZone: String?,
     availability: String,
+    status: String,
     recurrenceRule: String?,
     completion: @escaping (Result<String, CalendarError>) -> Void
   ) {
@@ -432,6 +433,8 @@ class EventsService {
     default: // fallback for unknown strings
       event.availability = .busy
     }
+
+    // EventKit exposes EKEvent.status as read-only, so status cannot be set on iOS.
     
     // Set recurrence rule if provided
     if let rruleString = recurrenceRule, let rule = parseRecurrenceRule(rruleString) {
@@ -791,6 +794,7 @@ class EventsService {
     isAllDay: Bool?,
     timeZone: String?,
     availability: String?,
+    status: String?,
     clearedFields: [String],
     completion: @escaping (Result<Void, CalendarError>) -> Void)
   {
@@ -848,6 +852,8 @@ class EventsService {
       default: break
       }
     }
+
+    // EventKit exposes EKEvent.status as read-only, so status cannot be set on iOS.
 
     // Check if recurring or single event
     let isRecurring = foundEvent.hasRecurrenceRules
@@ -909,6 +915,7 @@ class EventsService {
     isAllDay: Bool?,
     timeZone: String?,
     availability: String?,
+    status: String?,
     recurrenceRule: String?,
     clearedFields: [String],
     completion: @escaping (Result<String, CalendarError>) -> Void
@@ -984,6 +991,8 @@ class EventsService {
       default: break
       }
     }
+
+    // EventKit exposes EKEvent.status as read-only, so status cannot be set on iOS.
 
     // Apply the recurrence-rule patch.
     if clearedFields.contains("recurrenceRule") {

@@ -1,5 +1,3 @@
-import 'dart:ui' show Color;
-
 import 'package:device_calendar_plus/device_calendar_plus.dart';
 import 'package:device_calendar_plus_platform_interface/device_calendar_plus_platform_interface.dart';
 import 'package:flutter/services.dart';
@@ -25,6 +23,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     String? url,
     String? timeZone,
     String availability,
+    String status,
     String? recurrenceRule,
   )? _createEventCallback;
 
@@ -40,6 +39,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
   })? _updateEventCallback;
 
   // Callback to capture updateRecurring arguments
@@ -56,6 +56,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
     Patch<String>? recurrenceRule,
   })? _updateRecurringCallback;
 
@@ -98,6 +99,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
       String? url,
       String? timeZone,
       String availability,
+      String status,
       String? recurrenceRule,
     ) callback,
   ) {
@@ -116,6 +118,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
       bool? isAllDay,
       String? timeZone,
       String? availability,
+      String? status,
     }) callback,
   ) {
     _updateEventCallback = callback;
@@ -135,6 +138,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
       bool? isAllDay,
       String? timeZone,
       String? availability,
+      String? status,
       Patch<String>? recurrenceRule,
     }) callback,
   ) {
@@ -235,6 +239,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     String? url,
     String? timeZone,
     String availability,
+    String status,
     String? recurrenceRule,
   ) async {
     if (_exceptionToThrow != null) throw _exceptionToThrow!;
@@ -250,6 +255,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
         url,
         timeZone,
         availability,
+        status,
         recurrenceRule,
       );
     }
@@ -273,6 +279,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
   }) async {
     if (_exceptionToThrow != null) throw _exceptionToThrow!;
     if (_updateEventCallback != null) {
@@ -287,6 +294,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
         isAllDay: isAllDay,
         timeZone: timeZone,
         availability: availability,
+        status: status,
       );
     }
   }
@@ -305,6 +313,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
     bool? isAllDay,
     String? timeZone,
     String? availability,
+    String? status,
     Patch<String>? recurrenceRule,
   }) async {
     if (_exceptionToThrow != null) throw _exceptionToThrow!;
@@ -322,6 +331,7 @@ class MockDeviceCalendarPlusPlatform extends DeviceCalendarPlusPlatform
         isAllDay: isAllDay,
         timeZone: timeZone,
         availability: availability,
+        status: status,
         recurrenceRule: recurrenceRule,
       );
     }
@@ -586,6 +596,7 @@ void main() {
           url,
           timeZone,
           availability,
+          status,
           recurrenceRule,
         ) {
           capturedStart = startDate;
@@ -635,6 +646,7 @@ void main() {
           url,
           timeZone,
           availability,
+          status,
           recurrenceRule,
         ) {
           capturedStart = startDate;
@@ -653,6 +665,41 @@ void main() {
 
         expect(capturedStart, equals(startWithTime));
         expect(capturedEnd, equals(endWithTime));
+      });
+
+      test('passes status to the platform', () async {
+        String? capturedStatus;
+
+        final mock = MockDeviceCalendarPlusPlatform();
+        mock.setCreateEventCallback((
+          calendarId,
+          title,
+          startDate,
+          endDate,
+          isAllDay,
+          description,
+          location,
+          url,
+          timeZone,
+          availability,
+          status,
+          recurrenceRule,
+        ) {
+          capturedStatus = status;
+          return Future.value('event-id');
+        });
+
+        DeviceCalendarPlusPlatform.instance = mock;
+
+        await DeviceCalendar.instance.createEvent(
+          calendarId: 'cal-123',
+          title: 'Meeting',
+          startDate: DateTime(2024, 3, 15, 14, 0),
+          endDate: DateTime(2024, 3, 15, 15, 0),
+          status: EventStatus.tentative,
+        );
+
+        expect(capturedStatus, 'tentative');
       });
 
       test('throws ArgumentError when calendar ID is empty', () async {
@@ -771,6 +818,7 @@ void main() {
           isAllDay,
           timeZone,
           availability,
+          status,
         }) {
           capturedStart = startDate;
           capturedEnd = endDate;
@@ -791,6 +839,36 @@ void main() {
         expect(capturedEnd!.hour, 0);
         expect(capturedEnd!.minute, 0);
         expect(capturedEnd!.second, 0);
+      });
+
+      test('passes status to the platform', () async {
+        String? capturedStatus;
+
+        final mock = MockDeviceCalendarPlusPlatform();
+        mock.setUpdateEventCallback((
+          instanceId, {
+          title,
+          startDate,
+          endDate,
+          description,
+          location,
+          url,
+          isAllDay,
+          timeZone,
+          availability,
+          status,
+        }) {
+          capturedStatus = status;
+          return Future.value();
+        });
+        DeviceCalendarPlusPlatform.instance = mock;
+
+        await DeviceCalendar.instance.updateEvent(
+          eventId: 'event-123',
+          status: EventStatus.canceled,
+        );
+
+        expect(capturedStatus, 'canceled');
       });
 
       test('throws ArgumentError when eventId is empty', () async {
@@ -921,6 +999,7 @@ void main() {
           isAllDay,
           timeZone,
           availability,
+          status,
           recurrenceRule,
         }) {
           capturedEventId = eventId;
@@ -942,6 +1021,40 @@ void main() {
         expect(result, 'new-series-id');
       });
 
+      test('passes status to the platform', () async {
+        String? capturedStatus;
+
+        final mock = MockDeviceCalendarPlusPlatform();
+        mock.setUpdateRecurringCallback((
+          eventId,
+          timestamp,
+          span, {
+          title,
+          startDate,
+          endDate,
+          description,
+          location,
+          url,
+          isAllDay,
+          timeZone,
+          availability,
+          status,
+          recurrenceRule,
+        }) {
+          capturedStatus = status;
+          return Future.value('id');
+        });
+        DeviceCalendarPlusPlatform.instance = mock;
+
+        await DeviceCalendar.instance.updateRecurring(
+          'event-123',
+          EventSpan.allEvents,
+          status: EventStatus.tentative,
+        );
+
+        expect(capturedStatus, 'tentative');
+      });
+
       test('converts a RecurrenceRule patch to an RRULE string', () async {
         Patch<String>? capturedRule;
 
@@ -959,6 +1072,7 @@ void main() {
           isAllDay,
           timeZone,
           availability,
+          status,
           recurrenceRule,
         }) {
           capturedRule = recurrenceRule;
@@ -993,6 +1107,7 @@ void main() {
           isAllDay,
           timeZone,
           availability,
+          status,
           recurrenceRule,
         }) {
           capturedRule = recurrenceRule;
@@ -1027,6 +1142,7 @@ void main() {
           isAllDay,
           timeZone,
           availability,
+          status,
           recurrenceRule,
         }) {
           capturedStart = startDate;
