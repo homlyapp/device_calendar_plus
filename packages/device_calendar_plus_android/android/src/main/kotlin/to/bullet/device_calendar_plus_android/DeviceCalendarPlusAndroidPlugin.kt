@@ -2,6 +2,8 @@ package to.bullet.device_calendar_plus_android
 
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -10,6 +12,8 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 /** DeviceCalendarPlusAndroidPlugin */
 class DeviceCalendarPlusAndroidPlugin :
@@ -27,6 +31,8 @@ class DeviceCalendarPlusAndroidPlugin :
     private var eventsService: EventsService? = null
     private var showEventModalResult: Result? = null
     private var createEventModalResult: Result? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var calendarExecutor = createCalendarExecutor()
 
     companion object {
         private const val SHOW_EVENT_REQUEST_CODE = 1001
@@ -34,6 +40,10 @@ class DeviceCalendarPlusAndroidPlugin :
     }
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        if (calendarExecutor.isShutdown) {
+            calendarExecutor = createCalendarExecutor()
+        }
+
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "device_calendar_plus_android")
         channel.setMethodCallHandler(this)
 
@@ -269,17 +279,7 @@ class DeviceCalendarPlusAndroidPlugin :
         val startDate = java.util.Date(startDateMillis)
         val endDate = java.util.Date(endDateMillis)
         
-        val serviceResult = service.retrieveEvents(startDate, endDate, calendarIds)
-        serviceResult.fold(
-            onSuccess = { events -> result.success(events) },
-            onFailure = { error ->
-                if (error is CalendarException) {
-                    result.error(error.code, error.message, null)
-                } else {
-                    result.error(PlatformExceptionCodes.UNKNOWN_ERROR, error.message, null)
-                }
-            }
-        )
+        runCalendarOperation(result) { service.retrieveEvents(startDate, endDate, calendarIds) }
     }
     
     private fun handleGetEvent(call: MethodCall, result: Result) {
@@ -635,6 +635,39 @@ class DeviceCalendarPlusAndroidPlugin :
         )
     }
 
+    private fun <T> runCalendarOperation(result: Result, operation: () -> kotlin.Result<T>) {
+        calendarExecutor.execute {
+            val serviceResult = try {
+                operation()
+            } catch (error: Throwable) {
+                kotlin.Result.failure(error)
+            }
+
+            mainHandler.post {
+                serviceResult.fold(
+                    onSuccess = { value -> result.success(value) },
+                    onFailure = { error -> sendCalendarError(result, error) }
+                )
+            }
+        }
+    }
+
+    private fun sendCalendarError(result: Result, error: Throwable) {
+        if (error is CalendarException) {
+            result.error(error.code, error.message, null)
+        } else {
+            result.error(PlatformExceptionCodes.UNKNOWN_ERROR, error.message, null)
+        }
+    }
+
+    private fun createCalendarExecutor(): ExecutorService {
+        return Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "DeviceCalendarPlusCalendarWorker").apply {
+                isDaemon = true
+            }
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -659,6 +692,7 @@ class DeviceCalendarPlusAndroidPlugin :
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        calendarExecutor.shutdownNow()
         appContext = null
         calendarService = null
         eventsService = null
